@@ -54,6 +54,11 @@ if (WOWDECOMP_DISABLE_SIGNATURE_CHECKS)
     add_compile_definitions(DISABLE_SIGNATURE_CHECKS=1)
 endif ()
 
+# DXVK translates the client's Direct3D 9 calls to Vulkan. The client loads d3d9.dll with
+# LoadLibraryA("d3d9.dll") (CGxDeviceD3d / CGxDeviceD3d9Ex), so a copy next to the executable is picked
+# up before the system one. OFF builds and runs exactly like the original.
+option(WOWDECOMP_DXVK "Download DXVK and put its d3d9.dll next to the client" ON)
+
 # Third-party code is linked, not decompiled, for now.
 if (EXISTS ${CMAKE_SOURCE_DIR}/ThirdParty/CMakeLists.txt)
     add_subdirectory(ThirdParty)
@@ -117,3 +122,10 @@ foreach (target Wow WowClient MapViewer M2Viewer GxTest MpqTest BlpTest DbcTest 
         target_sources(${target} PRIVATE ${CMAKE_SOURCE_DIR}/waystone.rc)
     endif ()
 endforeach ()
+
+if (TARGET DxvkDll)
+    add_dependencies(Wow DxvkDll)
+    if (TARGET WowClient)
+        add_dependencies(WowClient DxvkDll)
+    endif ()
+endif ()

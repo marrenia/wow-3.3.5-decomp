@@ -185,3 +185,47 @@ if (WIN32)
             ${CMAKE_SOURCE_DIR}
     )
 endif ()
+
+# DXVK (Direct3D 9 -> Vulkan), pinned to a release and checked against its published SHA-256.
+if (WOWDECOMP_DXVK)
+    set(DXVK_VERSION 3.1.1)
+    set(DXVK_SHA256 40565b4a724aadc4433fa4e010b4b23916d9b1f1baeee64e17186db94f54e608)
+    set(DXVK_ARCHIVE ${CMAKE_CURRENT_BINARY_DIR}/dxvk-${DXVK_VERSION}.tar.gz)
+    set(DXVK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/dxvk-${DXVK_VERSION})
+
+    if (WOWDECOMP_ARCH_64)
+        set(DXVK_D3D9 ${DXVK_ROOT}/x64/d3d9.dll)
+    else ()
+        set(DXVK_D3D9 ${DXVK_ROOT}/x32/d3d9.dll)
+    endif ()
+
+    if (NOT EXISTS ${DXVK_D3D9})
+        file(DOWNLOAD
+            https://github.com/doitsujin/dxvk/releases/download/v${DXVK_VERSION}/dxvk-${DXVK_VERSION}.tar.gz
+            ${DXVK_ARCHIVE}
+            EXPECTED_HASH SHA256=${DXVK_SHA256}
+            STATUS DXVK_DOWNLOAD_STATUS
+            SHOW_PROGRESS
+        )
+        list(GET DXVK_DOWNLOAD_STATUS 0 DXVK_DOWNLOAD_RESULT)
+        if (NOT DXVK_DOWNLOAD_RESULT EQUAL 0)
+            message(FATAL_ERROR "DXVK: download failed (${DXVK_DOWNLOAD_STATUS}). Configure with -DWOWDECOMP_DXVK=OFF to build without it.")
+        endif ()
+        execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar xzf ${DXVK_ARCHIVE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            RESULT_VARIABLE DXVK_EXTRACT_RESULT
+        )
+        if (NOT DXVK_EXTRACT_RESULT EQUAL 0 OR NOT EXISTS ${DXVK_D3D9})
+            message(FATAL_ERROR "DXVK: extracting ${DXVK_ARCHIVE} failed")
+        endif ()
+    endif ()
+
+    add_custom_target(DxvkDll
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/bin/Win
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${DXVK_D3D9} ${CMAKE_SOURCE_DIR}/bin/Win/d3d9.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/dxvk/dxvk.conf ${CMAKE_SOURCE_DIR}/bin/Win/dxvk.conf
+        COMMENT "DXVK ${DXVK_VERSION}: copying d3d9.dll and dxvk.conf to bin/Win"
+    )
+    message(STATUS "DXVK ${DXVK_VERSION}: d3d9.dll will be placed in bin/Win")
+endif ()

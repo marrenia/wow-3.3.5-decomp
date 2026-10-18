@@ -81,12 +81,17 @@ logger off in `WowClient` with `-DWOWCLIENT_CRASH_LOG=OFF`.
 | `WOWDECOMP_DISABLE_SIGNATURE_CHECKS` | `OFF` | Skip the MPQ file and `.toc.sig` signature checks, so modified game data and interface files load |
 | `WOWCLIENT_CRASH_LOG` | `ON` | Build `WowClient` with the crash logger |
 | `WOWCLIENT_OUTPUT_OVERRIDE` | empty | Name the `WowClient` executable something other than `WowClient64` / `WowClient32` |
+| `WOWDECOMP_DXVK` | `ON` | Download [DXVK](https://github.com/doitsujin/dxvk) 3.1.1 (SHA-256 checked) and copy its `d3d9.dll` and `ThirdParty/dxvk/dxvk.conf` to `bin/Win/`, so the client renders through Vulkan. Needs a Vulkan-capable GPU driver. `OFF` uses the system Direct3D 9 like the original |
 
 ## Running
 
 1. Copy the `Data` folder of your 3.3.5a client into `bin/Win/`, so you have `bin/Win/Data/`.
 2. Point `Data/<locale>/realmlist.wtf` at the server you want to connect to.
 3. Start `bin/Win/WowClient64.exe` (or `Wow64.exe`).
+
+With `WOWDECOMP_DXVK` on, `bin/Win/d3d9.dll` is DXVK. Delete it (or build with `-DWOWDECOMP_DXVK=OFF`) to go back to
+the system Direct3D 9. On Linux under Wine, add `WINEDLLOVERRIDES=d3d9=n,b` so Wine loads the bundled DLL; Proton
+already uses DXVK for Direct3D 9 games.
 
 ## Layout
 
