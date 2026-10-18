@@ -89,6 +89,10 @@ logger off in `WowClient` with `-DWOWCLIENT_CRASH_LOG=OFF`.
 2. Point `Data/<locale>/realmlist.wtf` at the server you want to connect to.
 3. Start `bin/Win/WowClient64.exe` (or `Wow64.exe`).
 
+On x64 the texture cache (`textureCacheSize`, in MB) defaults to 256 MB and can go up to 256 MB on machines with more
+than 4 GB of RAM or 512 MB with more than 8 GB. The original client capped it at 64 MB (32 MB with 1 GB or less), which
+still applies on smaller machines and in Win32 builds.
+
 With `WOWDECOMP_DXVK` on, `bin/Win/d3d9.dll` is DXVK. Delete it (or build with `-DWOWDECOMP_DXVK=OFF`) to go back to
 the system Direct3D 9. On Linux under Wine, add `WINEDLLOVERRIDES=d3d9=n,b` so Wine loads the bundled DLL; Proton
 already uses DXVK for Direct3D 9 games.

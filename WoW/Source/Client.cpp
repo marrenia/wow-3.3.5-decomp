@@ -1084,7 +1084,13 @@ int32_t InitializeEngineCallback(const void* data, void* param) {
 
     s_cvTextureFilteringMode = CVar::Register("textureFilteringMode", "Texture filtering mode", 1, "1", CWorldParam::TextureFilteringCallback, CATEGORY_GRAPHICS, false, nullptr, false);
     s_cvarUIFaster = CVar::Register("UIFaster", "UI acceleration option", 0, "3", UIFasterCallback, CATEGORY_GRAPHICS, false, nullptr, false);
+#if defined(WOWDECOMP_ARCH_64)
+    // Not in 12340: x64 defaults to 256 MB instead of 32 MB. TextureSetCacheSize still clamps it to what
+    // the machine allows, so a 4 GB system keeps the original 64 MB ceiling.
+    s_cvTextureCacheSize = CVar::Register("textureCacheSize", "Texture cache size in megabytes", 1, "256", TextureCacheSizeCallback, CATEGORY_GRAPHICS, false, nullptr, false);
+#else
     s_cvTextureCacheSize = CVar::Register("textureCacheSize", "Texture cache size in bytes", 1, "32", TextureCacheSizeCallback, CATEGORY_GRAPHICS, false, nullptr, false);
+#endif
     TextureSetCacheSize(s_cvTextureCacheSize->m_intValue << 20);
 
     uint32_t m2Flags = GetM2CvarFlags();

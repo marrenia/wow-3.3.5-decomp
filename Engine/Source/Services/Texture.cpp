@@ -891,14 +891,38 @@ void TextureGetTextureFormats(PIXEL_FORMAT& pixelFormat, EGxTexFormat& gxTexForm
     }
 }
 
+#if defined(WOWDECOMP_ARCH_64)
+// Not in 12340. The 32-bit client caps the texture cache at 64 MB (32 MB with 1 GB of RAM or less) so
+// it fits a 2-4 GB address space. x64 has no such limit, so the cap scales with physical memory; the
+// original values still apply to machines with 4 GB or less.
+// Ceiling 512 MB: s_gxTexCacheSize/s_gxTexCacheMaxSize are int32_t, and TextureCacheUpdate compares
+// against 2 * s_gxTexCacheMaxSize, which overflows past 1 GB.
+static uint32_t TextureCacheGetMaxSize64() {
+    uint64_t physical = OsGetPhysicalMemory();
+
+    if (physical > 0x200000000ull) {          // > 8 GB
+        return 0x20000000;                     // 512 MB
+    }
+    if (physical > 0x100000000ull) {          // > 4 GB
+        return 0x10000000;                     // 256 MB
+    }
+
+    return physical <= 0x40000000 ? 0x2000000 : 0x4000000;
+}
+#endif
+
 // VERIFY: 7e1eb12e manual
 // OFFSET: 0x004B6180
 uint32_t TextureCacheGetMaxSize() {
+#if defined(WOWDECOMP_ARCH_64)
+    uint32_t size = TextureCacheGetMaxSize64();
+#else
     uint32_t size = 0x4000000;
 
     if (OsGetPhysicalMemory() <= 0x40000000) {
         size = 0x2000000;
     }
+#endif
 
     return g_theGxDevicePtr->DeviceApi() == GxApi_D3d9Ex ? 0 : size;
 }
@@ -1048,11 +1072,15 @@ void AsyncTextureWait(CTexture* texture) {
 // VERIFY: 6e25a772 manual
 // OFFSET: 0x004B6580
 void TextureSetCacheSize(int32_t size) {
+#if defined(WOWDECOMP_ARCH_64)
+    uint32_t maxSize = TextureCacheGetMaxSize64();
+#else
     uint32_t maxSize = 0x4000000;
 
     if (OsGetPhysicalMemory() <= 0x40000000) {
         maxSize = 0x2000000;
     }
+#endif
 
     if (g_theGxDevicePtr->DeviceApi() == GxApi_D3d9Ex) {
         maxSize = 0;
